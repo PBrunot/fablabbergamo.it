@@ -278,7 +278,7 @@ wp_patch "posts/5335" '{"status": "publish"}'
 
 ### 4.4 Yoast SEO via API
 
-I campi Yoast (`_yoast_wpseo_focuskw`, `_yoast_wpseo_metadesc`, `_yoast_wpseo_title`) **non sono esposti in scrittura** di default dalla REST API. Per abilitarli, aggiungere al tema `functions.php`:
+I campi Yoast (`_yoast_wpseo_focuskw`, `_yoast_wpseo_metadesc`, `_yoast_wpseo_title`) **sono esposti in scrittura** via REST API (verificato 2026-07-16): si aggiornano passando l'oggetto `meta` in un PATCH, come nell'esempio sotto. L'abilitazione è stata fatta nel tema `functions.php` con:
 
 ```php
 add_action('init', function() {
@@ -290,7 +290,7 @@ add_action('init', function() {
 });
 ```
 
-Dopo questa modifica, aggiornare i metadati Yoast via:
+Aggiornare i metadati Yoast via:
 ```bash
 wp_patch "posts/5335" '{
   "meta": {
@@ -301,7 +301,10 @@ wp_patch "posts/5335" '{
 }'
 ```
 
-Fino all'abilitazione, i metadati Yoast si modificano **manualmente nell'editor WordPress** dopo l'aggiornamento del contenuto via API.
+> **Attenzione — limiti verificati il 2026-09-27:**
+> - `register_post_meta` qui sopra è registrato solo per il post type **`post`**. Su una **`page`** (es. `/attrezzatura/...`) lo stesso PATCH ritorna `200 OK` ma **non modifica nulla** — il campo viene ignorato silenziosamente. Per le pagine, impostare i metadati Yoast manualmente in wp-admin finché il tema non registra gli stessi meta anche per `'page'`.
+> - Il campo robots (`_yoast_wpseo_meta-robots-noindex`, per mettere un contenuto in noindex) **non è registrato affatto**, nemmeno sui post: va sempre impostato manualmente da wp-admin (Yoast → Impostazioni avanzate).
+> - Un post creato in bozza via `POST /posts` ha `slug` vuoto finché non lo si imposta esplicitamente (anche con un PATCH separato subito dopo la creazione) o non lo si pubblica: il suo `link` resta nella forma `?p=<id>` fino ad allora.
 
 ### 4.5 Struttura JSON risposta (campi utili)
 
@@ -437,7 +440,7 @@ wp_get "categories?per_page=50&_fields=id,name,slug" | python3 -m json.tool
 wp_get "tags?per_page=100&_fields=id,name,slug" | python3 -m json.tool
 ```
 
-Categorie tipiche del sito: **Progetti**, **Tutorial**, **Eventi**, **Fab-O-MAtic**, **AI/Machine Learning**, **Arduino**, **Elettronica**.
+> **Attenzione — verificato 2026-09-27:** le categorie del sito **non sono tematiche**, sono organizzate per anno (`Progetti 2024`, `Progetti 2025`, `Progetti 2026`, `Corsi 2024`, `Corsi 2025`, `Corsi 2026`, oltre a `Eventi`, `News`, `Fiere e manifestazioni`, `Assemblea`, `crowdfunding`). Categorie come "Arduino" o "Elettronica" **non esistono**: la vera tassonomia tematica del sito vive nei **tag** (es. `arduino` conta 29 articoli, `elettronica` 21, `esp32` 6+). Per capire quanto contenuto esiste già su un argomento, prima di scrivere un nuovo articolo o costruire una pagina pillar, cerca nei tag (`wp_get "tags?search=<parola>"`), non nelle categorie.
 
 ---
 
@@ -446,9 +449,9 @@ Categorie tipiche del sito: **Progetti**, **Tutorial**, **Eventi**, **Fab-O-MAti
 - **Dominio**: sempre `https://www.fablabbergamo.it` (con `www`)
 - **Autenticazione**: Basic Auth con Application Password (vedi `.secret`)
 - **Editor**: Gutenberg (blocchi) — via API il contenuto va come HTML grezzo
-- **Yoast**: versione 27.4 — campi SEO in sola lettura via API (vedi §4.4 per abilitarli in scrittura)
+- **Yoast**: versione 27.4 — campi SEO scrivibili via API tramite l'oggetto `meta` (vedi §4.4)
 - **Rate limiting**: non configurato lato server, ma evita burst di molte richieste in pochi secondi
 
 ---
 
-*Aggiornato: 2026-04-25*
+*Aggiornato: 2026-09-27*
