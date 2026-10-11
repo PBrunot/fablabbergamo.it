@@ -3,3 +3,8 @@
 .env.local
 __pycache__/
 *.pyc
+/.vulnscan
+/ChatExport_2026-07-16
+/themes
+VERBALE CONSIGLIO DIRETTIVO N°7 DEL 14_07_2026.txt
+download.htm
